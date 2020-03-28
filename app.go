@@ -14,6 +14,8 @@ import (
 )
 
 func main() {
+	log.SetFlags(log.LstdFlags | log.Lshortfile)
+
 	log.Print("Starting application")
 	port := os.Getenv("PORT")
 
@@ -37,6 +39,9 @@ func main() {
 	http.HandleFunc("/api/exercise/new-user", func(w http.ResponseWriter, r *http.Request) {
 		newUserHandler(w, r, db)
 	})
+	http.HandleFunc("/api/exercise/users", func(w http.ResponseWriter, r *http.Request) {
+		allUsersHandler(w, r, db)
+	})
 
 	log.Print("Serving static assets on /assets")
 	fs := http.FileServer(http.Dir("assets/"))
@@ -44,6 +49,11 @@ func main() {
 
 	log.Print("Listening on port " + port)
 	log.Fatal(http.ListenAndServe(":"+port, nil))
+}
+
+type User struct {
+	Id       int64  `json:"_id"`
+	Username string `json:"username"`
 }
 
 func indexHandler(w http.ResponseWriter, r *http.Request) {
@@ -91,6 +101,36 @@ func newUserHandler(w http.ResponseWriter, r *http.Request, db *sql.DB) {
 	}
 
 	fmt.Fprintf(w, `{"username": "%s", "_id": "%d"}`, username, id)
+}
+
+func allUsersHandler(w http.ResponseWriter, r *http.Request, db *sql.DB) {
+	log.Print("Serving " + r.URL.Path)
+
+	rows, err := db.Query("SELECT id, username FROM users")
+	if err != nil {
+		log.Fatal(err)
+	}
+	defer rows.Close()
+
+	var users []User
+	for rows.Next() {
+		var user User
+		err := rows.Scan(&user.Id, &user.Username)
+		if err != nil {
+			log.Fatal(err)
+		}
+
+		users = append(users, user)
+	}
+
+	j, err := json.Marshal(users)
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	w.Header().Add("Access-Control-Allow-Origin", "*")
+	w.Header().Add("Content-Type", "application/json")
+	fmt.Fprintf(w, string(j))
 }
 
 func getPayloadData(r *http.Request, key string) (value string) {
