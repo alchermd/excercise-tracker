@@ -59,8 +59,7 @@ func newUserHandler(w http.ResponseWriter, r *http.Request, db *sql.DB) {
 	w.Header().Add("Access-Control-Allow-Origin", "*")
 	w.Header().Add("Content-Type", "application/json")
 
-	p := getPayload(r)
-	username := p["username"]
+	username := getPayloadData(r, "username")
 
 	var count int
 	rows, err := db.Query("SELECT COUNT(id) FROM users WHERE username = ?", username)
@@ -94,10 +93,20 @@ func newUserHandler(w http.ResponseWriter, r *http.Request, db *sql.DB) {
 	fmt.Fprintf(w, `{"username": "%s", "_id": "%d"}`, username, id)
 }
 
-func getPayload(r *http.Request) map[string]string {
-	body := make(map[string]string)
-	b, _ := ioutil.ReadAll(r.Body)
-	json.Unmarshal(b, &body)
+func getPayloadData(r *http.Request, key string) (value string) {
+	ct := r.Header.Get("Content-Type")
+	if ct == "application/json" {
+		body := make(map[string]string)
+		b, _ := ioutil.ReadAll(r.Body)
+		json.Unmarshal(b, &body)
 
-	return body
+		value = body[key]
+	}
+
+	if ct == "application/x-www-form-urlencoded" {
+		r.ParseForm()
+		value = r.FormValue(key)
+	}
+
+	return
 }
