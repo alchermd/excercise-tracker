@@ -184,6 +184,11 @@ func newExerciseHandler(w http.ResponseWriter, r *http.Request, db *sql.DB) {
 	rows.Next()
 	rows.Scan(&username)
 
+	d, err := time.Parse("2006-01-02", date)
+	if err != nil {
+		log.Fatal(err)
+	}
+	date = d.Format("Mon Jan 02 2006")
 	fmt.Fprintf(w, `{"username": "%s", "description": "%s", "duration": %s, "_id": %s, date: "%s"}`, username, description, duration, id, date)
 }
 
