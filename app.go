@@ -100,11 +100,24 @@ func newUserHandler(w http.ResponseWriter, r *http.Request, db *sql.DB) {
 		log.Fatal(err)
 	}
 
-	fmt.Fprintf(w, `{"username": "%s", "_id": "%d"}`, username, id)
+	user := &User{
+		Username: username,
+		Id:       id,
+	}
+
+	j, err := json.Marshal(user)
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	fmt.Fprintf(w, string(j))
 }
 
 func allUsersHandler(w http.ResponseWriter, r *http.Request, db *sql.DB) {
 	log.Print("Serving " + r.URL.Path)
+
+	w.Header().Add("Access-Control-Allow-Origin", "*")
+	w.Header().Add("Content-Type", "application/json")
 
 	rows, err := db.Query("SELECT id, username FROM users")
 	if err != nil {
@@ -128,8 +141,6 @@ func allUsersHandler(w http.ResponseWriter, r *http.Request, db *sql.DB) {
 		log.Fatal(err)
 	}
 
-	w.Header().Add("Access-Control-Allow-Origin", "*")
-	w.Header().Add("Content-Type", "application/json")
 	fmt.Fprintf(w, string(j))
 }
 
