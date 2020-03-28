@@ -1,4 +1,4 @@
-module github.com/alchermd/excercise-tracker
+module github.com/alchermd/exercise-tracker
 
 go 1.13
 
