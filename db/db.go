@@ -30,5 +30,17 @@ func main() {
 		log.Fatal(err)
 	}
 
+	_, err = db.Exec(`CREATE TABLE IF NOT EXISTS exercises(
+		id INT AUTO_INCREMENT PRIMARY KEY,
+		user_id INT NOT NULL,
+		description TEXT NOT NULL,
+		duration INT NOT NULL,
+		date DATE NOT NULL
+	)`)
+
+	if err != nil {
+		log.Fatal(err)
+	}
+
 	log.Print("Database initialized")
 }
