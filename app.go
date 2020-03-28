@@ -9,6 +9,7 @@ import (
 	"log"
 	"net/http"
 	"os"
+	"time"
 
 	_ "github.com/go-sql-driver/mysql"
 )
@@ -157,6 +158,10 @@ func newExerciseHandler(w http.ResponseWriter, r *http.Request, db *sql.DB) {
 	description := getPayloadData(r, "description")
 	duration := getPayloadData(r, "duration")
 	date := getPayloadData(r, "date")
+
+	if date == "" {
+		date = time.Now().Format("2006-01-02")
+	}
 
 	stmt, err := db.Prepare("INSERT INTO exercises(user_id, description, duration, date) VALUES(?, ?, ?, ?)")
 	if err != nil {
