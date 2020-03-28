@@ -189,7 +189,7 @@ func newExerciseHandler(w http.ResponseWriter, r *http.Request, db *sql.DB) {
 		log.Fatal(err)
 	}
 	date = d.Format("Mon Jan 02 2006")
-	fmt.Fprintf(w, `{"username": "%s", "description": "%s", "duration": %s, "_id": %s, date: "%s"}`, username, description, duration, id, date)
+	fmt.Fprintf(w, `{"username": "%s", "description": "%s", "duration": %s, "_id": %s, "date": "%s"}`, username, description, duration, id, date)
 }
 
 func getPayloadData(r *http.Request, key string) (value string) {
