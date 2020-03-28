@@ -42,6 +42,9 @@ func main() {
 	http.HandleFunc("/api/exercise/users", func(w http.ResponseWriter, r *http.Request) {
 		allUsersHandler(w, r, db)
 	})
+	http.HandleFunc("/api/exercise/add", func(w http.ResponseWriter, r *http.Request) {
+		newExerciseHandler(w, r, db)
+	})
 
 	log.Print("Serving static assets on /assets")
 	fs := http.FileServer(http.Dir("assets/"))
@@ -142,6 +145,41 @@ func allUsersHandler(w http.ResponseWriter, r *http.Request, db *sql.DB) {
 	}
 
 	fmt.Fprintf(w, string(j))
+}
+
+func newExerciseHandler(w http.ResponseWriter, r *http.Request, db *sql.DB) {
+	log.Print("Serving " + r.URL.Path)
+
+	w.Header().Add("Access-Control-Allow-Origin", "*")
+	w.Header().Add("Content-Type", "application/json")
+
+	id := getPayloadData(r, "userId")
+	description := getPayloadData(r, "description")
+	duration := getPayloadData(r, "duration")
+	date := getPayloadData(r, "date")
+
+	stmt, err := db.Prepare("INSERT INTO exercises(user_id, description, duration, date) VALUES(?, ?, ?, ?)")
+	if err != nil {
+		log.Fatal(err)
+	}
+	defer stmt.Close()
+
+	_, err = stmt.Exec(id, description, duration, date)
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	rows, err := db.Query("SELECT username FROM  users WHERE id = ?", id)
+	if err != nil {
+		log.Fatal(err)
+	}
+	defer stmt.Close()
+
+	var username string
+	rows.Next()
+	rows.Scan(&username)
+
+	fmt.Fprintf(w, `{"username": "%s", "description": "%s", "duration": %s, "_id": %s, date: "%s"}`, username, description, duration, id, date)
 }
 
 func getPayloadData(r *http.Request, key string) (value string) {
