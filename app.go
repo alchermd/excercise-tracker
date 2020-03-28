@@ -55,6 +55,10 @@ func indexHandler(w http.ResponseWriter, r *http.Request) {
 
 func newUserHandler(w http.ResponseWriter, r *http.Request, db *sql.DB) {
 	log.Print("Serving " + r.URL.Path)
+
+	w.Header().Add("Access-Control-Allow-Origin", "*")
+	w.Header().Add("Content-Type", "application/json")
+
 	p := getPayload(r)
 	username := p["username"]
 
