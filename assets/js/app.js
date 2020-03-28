@@ -4,6 +4,8 @@ const vm = new Vue({
 	data: {
 		newUsername: "",
 		response: "",
+		users: [],
+		displayUsers: false,
 	},
 	methods: {
 		createNewUser(e) {
@@ -29,11 +31,20 @@ const vm = new Vue({
 			})
 			.then(data => {
 				console.log(data);
-				this.response = `User Created! username:${data.username} id: ${data._id}`
+				this.response = `User Created! username:${data.username} id: ${data._id}`;
+				this.users.push(data);
 			})
 			.catch(err => {
-				this.response = "Username is already taken!"
+				this.response = "Username is already taken!";
 			})
+		},
+		toggleUsers() {
+			this.displayUsers = !this.displayUsers;
+			if (this.displayUsers) {
+				fetch("/api/exercise/users")
+					.then(res => res.json())
+					.then(data => this.users = data);
+			}
 		}
 	}
 })

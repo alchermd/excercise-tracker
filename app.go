@@ -119,7 +119,7 @@ func allUsersHandler(w http.ResponseWriter, r *http.Request, db *sql.DB) {
 	w.Header().Add("Access-Control-Allow-Origin", "*")
 	w.Header().Add("Content-Type", "application/json")
 
-	rows, err := db.Query("SELECT id, username FROM users")
+	rows, err := db.Query("SELECT id, username FROM users ORDER BY id")
 	if err != nil {
 		log.Fatal(err)
 	}

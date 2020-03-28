@@ -20,6 +20,17 @@
 		<div v-if="response">
 			<p>${ response }</p>
 		</div>
+		
+		<div>
+			<button @click="toggleUsers">Toggle Users</button>
+			<div v-if="displayUsers">
+				<ul>
+					<li v-for="user in users">
+						#${ user._id } - ${ user.username }
+					</li>
+				</ul>
+			</div>
+		</div>
 	</div>
 	
 	<script src="https://cdn.jsdelivr.net/npm/vue"></script>
