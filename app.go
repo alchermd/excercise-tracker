@@ -8,6 +8,7 @@ import (
 	"html/template"
 	"io/ioutil"
 	"log"
+	"math"
 	"net/http"
 	"os"
 	"strconv"
@@ -248,7 +249,25 @@ func getExerciseHandler(w http.ResponseWriter, r *http.Request, db *sql.DB) {
 	rows.Next()
 	rows.Scan(&username)
 
-	rows, err = db.Query("SELECT description, duration, date FROM exercises WHERE user_id = ?", userId)
+	var from, to int64
+
+	if r.URL.Query().Get("from") == "" || r.URL.Query().Get("to") == "" {
+		from = 0
+		to = math.MaxInt64
+	} else {
+		f, _ := time.Parse("2006-01-02", r.URL.Query().Get("from"))
+		t, _ := time.Parse("2006-01-02", r.URL.Query().Get("to"))
+
+		from = f.Unix()
+		to = t.Unix()
+	}
+
+	limit, err := strconv.Atoi(r.URL.Query().Get("limit"))
+	if err != nil {
+		limit = math.MaxInt64
+	}
+
+	rows, err = db.Query("SELECT description, duration, date FROM exercises WHERE user_id = ? AND (date BETWEEN FROM_UNIXTIME(?) AND FROM_UNIXTIME(?)) LIMIT ?", userId, from, to, limit)
 	if err != nil {
 		log.Fatal(err)
 	}
