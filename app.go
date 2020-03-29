@@ -253,13 +253,13 @@ func getExerciseHandler(w http.ResponseWriter, r *http.Request, db *sql.DB) {
 
 	if r.URL.Query().Get("from") == "" || r.URL.Query().Get("to") == "" {
 		from = 0
-		to = math.MaxInt64
+		to = 2147483647
 	} else {
 		f, _ := time.Parse("2006-01-02", r.URL.Query().Get("from"))
 		t, _ := time.Parse("2006-01-02", r.URL.Query().Get("to"))
 
-		from = f.Unix()
-		to = t.Unix()
+		from = f.Unix() - 28800
+		to = t.Unix() - 28800
 	}
 
 	limit, err := strconv.Atoi(r.URL.Query().Get("limit"))
