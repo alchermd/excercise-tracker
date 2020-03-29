@@ -6,6 +6,12 @@ const vm = new Vue({
 		response: "",
 		users: [],
 		displayUsers: false,
+		newExercise: {
+			userId: "",
+			description: "",
+			duration: 0,
+			date: ""
+		}
 	},
 	methods: {
 		createNewUser(e) {
@@ -45,6 +51,31 @@ const vm = new Vue({
 					.then(res => res.json())
 					.then(data => this.users = data);
 			}
+		},
+		createNewExercise(e) {
+			e.preventDefault();
+
+			const payload = {
+				userId: this.newExercise.userId,
+				description: this.newExercise.description,
+				duration: this.newExercise.duration,
+				date: this.newExercise.date,
+			};
+
+			fetch("/api/exercise/add", {
+				method: "POST",
+				headers: {
+					"Content-Type": "application/json"
+				},
+				body: JSON.stringify(payload),
+			})
+			.then(res => res.json())
+			.then(data => {
+				alert("Exercise logged!");
+			})
+			.catch(err => {
+				alert("Something went wrong.");
+			})
 		}
 	}
 })

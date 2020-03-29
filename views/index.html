@@ -31,6 +31,28 @@
 				</ul>
 			</div>
 		</div>
+
+		<div>
+			<h2>Log a New Exercise</h2>
+			<form @submit="createNewExercise">
+				<div>
+					<input type="text" v-model="newExercise.userId" placeholder="User ID" required>
+				</div>
+				<div>
+					<textarea v-model="newExercise.description" placeholder="Description" required></textarea>			
+				</div>
+				<div>
+					<input type="number" v-model.number="newExercise.duration" placeholder="Duration" required>
+				</div>
+				<div>
+					<input type="text" v-model="newExercise.date" placeholder="Date">
+				</div>
+
+				<div>
+					<input type="submit" value="Post">
+				</div>
+			</form>
+		</div>
 	</div>
 	
 	<script src="https://cdn.jsdelivr.net/npm/vue"></script>
