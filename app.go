@@ -46,6 +46,9 @@ func main() {
 	http.HandleFunc("/api/exercise/add", func(w http.ResponseWriter, r *http.Request) {
 		newExerciseHandler(w, r, db)
 	})
+	http.HandleFunc("/api/exercise/log", func(w http.ResponseWriter, r *http.Request) {
+		getExerciseHandler(w, r, db)
+	})
 
 	log.Print("Serving static assets on /assets")
 	fs := http.FileServer(http.Dir("assets/"))
@@ -58,6 +61,12 @@ func main() {
 type User struct {
 	Id       int64  `json:"_id"`
 	Username string `json:"username"`
+}
+
+type Exercise struct {
+	Description string `json:"description"`
+	Duration    int    `json:"duration"`
+	Date        string `json"date"`
 }
 
 func indexHandler(w http.ResponseWriter, r *http.Request) {
@@ -219,6 +228,46 @@ func newExerciseHandler(w http.ResponseWriter, r *http.Request, db *sql.DB) {
 	}
 	date = d.Format("Mon Jan 02 2006")
 	fmt.Fprintf(w, `{"username": "%s", "description": "%s", "duration": %d, "_id": %s, "date": "%s"}`, username, description, duration, id, date)
+}
+
+func getExerciseHandler(w http.ResponseWriter, r *http.Request, db *sql.DB) {
+	log.Print("Serving " + r.URL.Path)
+
+	w.Header().Add("Access-Control-Allow-Origin", "*")
+	w.Header().Add("Content-Type", "application/json")
+
+	userId := r.URL.Query().Get("userId")
+
+	var username string
+	rows, err := db.Query("SELECT username FROM users WHERE id = ?", userId)
+	if err != nil {
+		log.Fatal(err)
+	}
+	defer rows.Close()
+
+	rows.Next()
+	rows.Scan(&username)
+
+	rows, err = db.Query("SELECT description, duration, date FROM exercises WHERE user_id = ?", userId)
+	if err != nil {
+		log.Fatal(err)
+	}
+	defer rows.Close()
+
+	exercises := []Exercise{}
+	for rows.Next() {
+		var e Exercise
+		rows.Scan(&e.Description, &e.Duration, &e.Date)
+
+		exercises = append(exercises, e)
+	}
+
+	j, err := json.Marshal(exercises)
+	if err != nil {
+		log.Fatal(err)
+	}
+
+	fmt.Fprintf(w, `{"_id": "%s", "username": "%s", "log": %s, "count": %d}`, userId, username, string(j), len(exercises))
 }
 
 func getPayload(r *http.Request) map[string]interface{} {
