@@ -4,14 +4,14 @@ import (
 	"database/sql"
 	"encoding/json"
 	"fmt"
+	_ "github.com/go-sql-driver/mysql"
 	"html/template"
 	"io/ioutil"
 	"log"
 	"net/http"
 	"os"
+	"strconv"
 	"time"
-
-	_ "github.com/go-sql-driver/mysql"
 )
 
 func main() {
@@ -73,7 +73,17 @@ func newUserHandler(w http.ResponseWriter, r *http.Request, db *sql.DB) {
 	w.Header().Add("Access-Control-Allow-Origin", "*")
 	w.Header().Add("Content-Type", "application/json")
 
-	username := getPayloadData(r, "username")
+	var username string
+	ct := r.Header.Get("Content-Type")
+
+	if ct == "application/json" {
+		p := getPayload(r)
+		username = p["username"].(string)
+	}
+	if ct == "application/x-www-form-urlencoded" {
+		r.ParseForm()
+		username = r.FormValue("username")
+	}
 
 	var count int
 	rows, err := db.Query("SELECT COUNT(id) FROM users WHERE username = ?", username)
@@ -154,10 +164,29 @@ func newExerciseHandler(w http.ResponseWriter, r *http.Request, db *sql.DB) {
 	w.Header().Add("Access-Control-Allow-Origin", "*")
 	w.Header().Add("Content-Type", "application/json")
 
-	id := getPayloadData(r, "userId")
-	description := getPayloadData(r, "description")
-	duration := getPayloadData(r, "duration")
-	date := getPayloadData(r, "date")
+	var (
+		id, description, date string
+		duration              int
+	)
+
+	ct := r.Header.Get("Content-Type")
+	if ct == "application/json" {
+		p := getPayload(r)
+
+		id = p["userId"].(string)
+		description = p["description"].(string)
+		duration = int(p["duration"].(float64))
+		date = p["date"].(string)
+	}
+	if ct == "application/x-www-form-urlencoded" {
+		r.ParseForm()
+
+		id = r.FormValue("userId")
+		description = r.FormValue("description")
+		durationFloat, _ := strconv.ParseFloat(r.FormValue("duration"), 64)
+		duration = int(durationFloat)
+		date = r.FormValue("date")
+	}
 
 	if date == "" {
 		date = time.Now().Format("2006-01-02")
@@ -189,23 +218,13 @@ func newExerciseHandler(w http.ResponseWriter, r *http.Request, db *sql.DB) {
 		log.Fatal(err)
 	}
 	date = d.Format("Mon Jan 02 2006")
-	fmt.Fprintf(w, `{"username": "%s", "description": "%s", "duration": %s, "_id": %s, "date": "%s"}`, username, description, duration, id, date)
+	fmt.Fprintf(w, `{"username": "%s", "description": "%s", "duration": %d, "_id": %s, "date": "%s"}`, username, description, duration, id, date)
 }
 
-func getPayloadData(r *http.Request, key string) (value string) {
-	ct := r.Header.Get("Content-Type")
-	if ct == "application/json" {
-		body := make(map[string]string)
-		b, _ := ioutil.ReadAll(r.Body)
-		json.Unmarshal(b, &body)
+func getPayload(r *http.Request) map[string]interface{} {
+	body := make(map[string]interface{})
+	b, _ := ioutil.ReadAll(r.Body)
+	json.Unmarshal(b, &body)
 
-		value = body[key]
-	}
-
-	if ct == "application/x-www-form-urlencoded" {
-		r.ParseForm()
-		value = r.FormValue(key)
-	}
-
-	return
+	return body
 }
